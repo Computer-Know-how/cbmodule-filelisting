@@ -1,0 +1,8 @@
+{
+	"location": "https://github.com/Computer-Know-how/cbmodule-filelisting/raw/master/fileListing.zip",
+	"name": "File Listing",
+	"packageDirectory": "fileListing",
+	"slug": "cbmodule-filelisting",
+	"type": "contentbox-modules",
+	"version": "1.0"
+}
