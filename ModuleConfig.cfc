@@ -14,7 +14,7 @@ component {
 	this.author 			= "Computer Know How, LLC";
 	this.webURL 			= "https://compknowhow.com";
 	this.description 		= "A file listing for your ContentBox website";
-	this.version			= "1.0";
+	this.version			= "1.1";
 	// If true, looks for views in the parent first, if not found, then in the module. Else vice-versa
 	this.viewParentLookup 	= true;
 	// If true, looks for layouts in the parent first, if not found, then in module. Else vice-versa
