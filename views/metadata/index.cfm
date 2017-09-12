@@ -35,7 +35,7 @@
 					<table id="metadataTable" class="tablesorter table table-striped">
 						<thead>
 							<tr>
-								<th>File Name</th>
+								<th>File</th>
 								<th>Title</th>
 								<th>Description</th>
 								<th>Modified Date</th>
@@ -45,7 +45,7 @@
 						<tbody>
 							<cfloop array="#prc.metadata#" index="file">
 								<tr>
-									<td>#file.getFileName()#</td>
+									<td>#file.getFolder()#<cfif file.getFolder() neq "">/</cfif>#file.getFileName()#</td>
 									<td>#file.getTitle()#</td>
 									<td>#file.getDescription()#</td>
 									<td>#dateFormat(file.getModified(), "mm/dd/yyyy")#</td>

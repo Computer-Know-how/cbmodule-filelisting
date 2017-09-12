@@ -58,7 +58,7 @@ component extends="coldbox.system.Interceptor" {
 
 	private function getRelativeMediaRoot( folder ) {
 		arguments.folder = replace(arguments.folder, "\", "/", "all");
-		return replace(replace(arguments.folder, getMediaRoot(), "", "all"), "/", "", "all");
+		return replace(arguments.folder, getMediaRoot(), "", "all");
 	}
 
 	private function fileMetadataExists( folder, filename ) {
@@ -85,28 +85,20 @@ component extends="coldbox.system.Interceptor" {
 	}
 
 	private function isFileListingFolder( folder ) {
-		//check up the folder and traverse up the tree to see if any are file folders
-		var found = false;
-
 		//convert all '\' to '/'
-		var folderToCheck = replace(arguments.folder, "\", "/", "all");
+		var folderToCheck = cleanFolder(replace(arguments.folder, "\", "/", "all"));
 
-		while ( !found AND folderToCheck NEQ getMediaRoot() AND len(folderToCheck) GT len(getMediaRoot()) ) {
-			if ( arrayFindNoCase( getRegisteredFolders(), folderToCheck ) ) { found = true; }
-			//traverse up the folder tree
-			folderToCheck = GetDirectoryFromPath( folderToCheck ).replaceFirst( "[\\\/]{1}$", "" );
-		}
-
-		return found;
+		return findNoCase(getMediaRoot(), folderToCheck) and arrayFindNoCase( getRegisteredFolders(), folderToCheck );
 	}
 
 	private function processFile( folder, filename ) {
 		// save if it metadata doesn't already exist
 		if(!fileMetadataExists(arguments.folder, arguments.filename)) {
 			var oMetadata = metadataService.get(0);
-			oMetadata.setFolder(getRelativeMediaRoot(arguments.folder));
+			oMetadata.setFolder(cleanFolder(getRelativeMediaRoot(arguments.folder), true));
 			oMetadata.setFilename(arguments.filename);
 			oMetadata.setModified(createODBCDate(now()));
+			oMetadata.setSize(getFileInfo(arguments.folder & "/" & arguments.filename).size);
 			metadataService.save( oMetadata );
 		}
 	}
@@ -114,7 +106,7 @@ component extends="coldbox.system.Interceptor" {
 	private function renameFile( folder, oldFilename, newFilename ) {
 		//adjust the metadata to reflect the new filename
 		var metaData = metadataService.list(criteria={
-			folder=getRelativeMediaRoot(arguments.folder),
+			folder=cleanFolder(getRelativeMediaRoot(arguments.folder), true),
 			filename=arguments.oldFilename
 		}, asQuery=false);
 
@@ -128,12 +120,26 @@ component extends="coldbox.system.Interceptor" {
 	private function deleteFile( folder, filename ) {
 		//delete the metadata for the file
 		var metaData = metadataService.list(criteria={
-			folder=getRelativeMediaRoot(arguments.folder),
+			folder=cleanFolder(getRelativeMediaRoot(arguments.folder), true),
 			filename=arguments.filename
 		}, asQuery=false);
 
 		for(var data in metadata) {
 			metadataService.delete( data );
 		}
+	}
+
+	private function cleanFolder( folder, leading=false ) {
+		// strip trailing forward slash
+		if (right(arguments.folder, 1) eq "/") {
+			arguments.folder = left(arguments.folder, len(arguments.folder) - 1);
+		}
+
+		// strip leading forward slash
+		if (arguments.leading and left(arguments.folder, 1) eq "/") {
+			arguments.folder = right(arguments.folder, len(arguments.folder) - 1);
+		}
+
+		return arguments.folder;
 	}
 }

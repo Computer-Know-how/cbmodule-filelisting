@@ -70,24 +70,7 @@ component extends="base" {
 					oMetadata.setFolder(getRelativeMediaRoot(folder));
 					oMetadata.setFilename(file.name);
 					oMetadata.setModified(createODBCDate(now()));
-					metadataService.save(oMetadata);
-				}
-			}
-		}
-	}
-
-	private function removeMetadata(folders, cbSettings) {
-		var mediaRoot = expandPath(cbSettings.cb_media_directoryRoot & "\");
-
-		for (var folder in arguments.folders) {
-			var fileList = directoryList(mediaRoot & folder, false, "query");
-
-			for (var file in fileList) {
-				if (file.type == "File" && !fileMetadataExists(folder, file.name)) {
-					var oMetadata = metadataService.get(0);
-					oMetadata.setFolder(getRelativeMediaRoot(folder));
-					oMetadata.setFilename(file.name);
-					oMetadata.setModified(createODBCDate(now()));
+					oMetadata.setSize(file.size);
 					metadataService.save(oMetadata);
 				}
 			}
@@ -106,6 +89,6 @@ component extends="base" {
 	private function getRelativeMediaRoot( folder ) {
 		arguments.folder = replace(arguments.folder, "\", "/", "all");
 		var mediaRoot = replace(expandPath(settingService.getSetting('cb_media_directoryRoot')), "\", "/", "all");
-		return replace(replace(arguments.folder, mediaRoot, "", "all"), "/", "", "all");
+		return replace(arguments.folder, mediaRoot, "", "all");
 	}
 }

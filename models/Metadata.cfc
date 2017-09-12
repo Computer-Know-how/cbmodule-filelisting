@@ -18,6 +18,7 @@ component persistent="true" table="cb_filelisting_metadata" {
 	property name="title" notnull="false" length="200" default="";
 	property name="description" notnull="false" length="2000" default="";
 	property name="modified" notnull="false" ormType="timestamp";
+	property name="size" notnull="false" length="20" default="";
 
 	// Constructor
 	function init(){
@@ -36,6 +37,7 @@ component persistent="true" table="cb_filelisting_metadata" {
 		if(len(filename) gt 200) { arrayAppend(errors, "Filename is too long"); }
 		if(len(title) gt 2000) { arrayAppend(errors, "Title is too long"); }
 		if(len(description) gt 2000) { arrayAppend(errors, "Description is too long"); }
+		if(len(size) gt 20) { arrayAppend(errors, "Size is too long"); }
 
 		// Required
 		if( !len(folder) ){ arrayAppend(errors, "Folder is required"); }

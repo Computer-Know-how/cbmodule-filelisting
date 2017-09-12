@@ -62,7 +62,12 @@ component {
 				href="#menuService.buildModuleLink('FileListing', 'metadata.index')#"
 			);
 		}
+	}
 
+	/**
+	* Fired when the module is activated by ContentBox
+	*/
+	function onActivate(){
 		var settingService = controller.getWireBox().getInstance("SettingService@cb");
 
 		// Store default settings
@@ -89,7 +94,12 @@ component {
 			// Remove the 'File Listing' contribution from the module menu
 			menuService.removeSubMenu(topMenu=menuService.MODULES,name="FileListing");
 		}
+	}
 
+	/**
+	* Fired when the module is deactivated by ContentBox
+	*/
+	function onDeactivate(){
 		var settingService = controller.getWireBox().getInstance("SettingService@cb");
 
 		var args = {name="fileListing"};

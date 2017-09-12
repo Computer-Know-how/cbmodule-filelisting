@@ -25,7 +25,7 @@ component extends="contentbox.models.ui.BaseWidget" singleton{
 	* Renders a file list
 	* @folder.hint The folder (relative to the ContentBox content root) from which to list the files (meetings/minutes)
 	* @filter.hint A file extension filter to apply (*.pdf)
-	* @sort.hint The sort field (Name, Size, DateLastModified)
+	* @sort.hint The sort field (FileName, Title, Size, DateLastModified)
 	* @order.hint The sort order of the files listed (ASC/DESC)
 	* @class.hint Class(es) to apply to the listing table
 	* @showIcons.hint Show file type icons (FontAwesome required)
@@ -33,12 +33,14 @@ component extends="contentbox.models.ui.BaseWidget" singleton{
 	any function renderIt(
 		string folder,
 		string filter="*",
-		string sort="Name",
+		string sort="FileName",
 		string order="ASC",
 		string class="",
 		boolean showDescription=false,
 		boolean showIcons=false
 	){
+		arguments.sort = (arguments.sort == "DateLastModified" ? "modified" : arguments.sort);
+
 		var event = getRequestContext();
 		var cbSettings = event.getValue(name="cbSettings",private=true);
 		var sortOrder = arguments.sort & " " & arguments.order;
@@ -54,14 +56,14 @@ component extends="contentbox.models.ui.BaseWidget" singleton{
 		}
 
 		if (directoryExists(mediaPathExpanded)) {
-			var listing = directoryList(mediaPath,false,"query",formatFilter(arguments.filter),sortOrder);
+			var listing = metadataService.findAllWhere({ folder: replace(arguments.folder, "\", "/", "all") }, sortOrder);
 
 			// generate file listing
 			saveContent variable="rString"{
 				// container (start)
 				writeOutput('<div class="cb-filelisting">');
 
-				if( listing.recordcount gt 0 ){
+				if( arrayLen(listing) gt 0 ){
 					writeOutput('
 						<table class="#class#">
 							<thead>
@@ -91,62 +93,54 @@ component extends="contentbox.models.ui.BaseWidget" singleton{
 							<tbody>
 					');
 
-					for (var x=1; x lte listing.recordcount; x++) {
-						if( listing.type[x] eq "File" ) {
-							var metadata = getFileMetadata(mediaRoot, listing.directory[x], listing.name[x]);
+					for (var x=1; x lte arrayLen(listing); x++) {
+						// row
+						writeOutput('
+							<tr>
+								<td class="cb-filelisting-name">');
 
-							// row
-							writeOutput('
-								<tr>
-									<td class="cb-filelisting-name">');
+						var link = event.buildLink(displayMediaPath) & "/" & listing[x].getFileName();
 
-							var link = event.buildLink(displayMediaPath) & "/" & listing.name[x];
+						if(showIcons) {
+							writeOutput('<a href="#link#" target="_blank">' & fileIcon(listLast(listing[x].getFileName(),".")) & '</a> <a href="#link#" target="_blank">');
 
-							if(showIcons) {
-								writeOutput('<a href="#link#" target="_blank">' & fileIcon(listLast(listing.name[x],".")) & '</a> <a href="#link#" target="_blank">');
-
-								if (metadata.getTitle() neq "") {
-									writeOutput(metadata.getTitle());
-								} else {
-									writeOutput(listing.name[x]);
-								}
-
-								writeOutput('</a>');
+							if (listing[x].getTitle() neq "") {
+								writeOutput(listing[x].getTitle());
 							} else {
-								writeOutput('<a href="#link#" target="_blank">');
-
-								if (metadata.getTitle() neq "") {
-									writeOutput(metadata.getTitle());
-								} else {
-									writeOutput(listing.name[x]);
-								}
-
-								writeOutput('</a>');
+								writeOutput(listing[x].getFileName());
 							}
 
-							if (arguments.showDescription) {
-								writeOutput('<td class="cb-filelisting-description">');
-									writeOutput(metadata.getDescription());
-								writeOutput('</td>');
+							writeOutput('</a>');
+						} else {
+							writeOutput('<a href="#link#" target="_blank">');
+
+							if (listing[x].getTitle() neq "") {
+								writeOutput(listing[x].getTitle());
+							} else {
+								writeOutput(listing[x].getFileName());
 							}
 
-							writeOutput('
-									</td>
-									<td class="cb-filelisting-size">
-										#formatFileSize(listing.size[x])#
-									</td>
-									<td class="cb-filelisting-modified">');
-
-									if (metadata.getModified() neq "") {
-										writeOutput(dateFormat(metadata.getModified(),'m/d/yyyy'));
-									} else {
-										writeOutput(dateFormat(listing.datelastmodified[x],'m/d/yyyy'));
-									}
-							writeOutput('
-									</td>
-								</tr>
-							');
+							writeOutput('</a>');
 						}
+
+						if (arguments.showDescription) {
+							writeOutput('<td class="cb-filelisting-description">');
+								writeOutput(listing[x].getDescription());
+							writeOutput('</td>');
+						}
+
+						writeOutput('
+								</td>
+								<td class="cb-filelisting-size">
+									#formatFileSize(listing[x].getSize())#
+								</td>
+								<td class="cb-filelisting-modified">');
+
+								writeOutput(dateFormat(listing[x].getModified(), 'm/d/yyyy'));
+						writeOutput('
+								</td>
+							</tr>
+						');
 					}
 
 					writeOutput('
@@ -180,14 +174,18 @@ component extends="contentbox.models.ui.BaseWidget" singleton{
 	private string function formatFileSize(required fileSize){
 		var formattedFileSize = "";
 
+		if (not isNumeric(arguments.fileSize)) {
+			return "-----";
+		}
+
 		if( arguments.fileSize LT 1024 ) {
-			formattedFileSize = decimalFormat(arguments.fileSize/1024) & " KB"
+			formattedFileSize = decimalFormat(arguments.fileSize / 1024) & " KB"
 		} else if( arguments.fileSize GTE 1024 and arguments.fileSize LT 1048576) {
-			formattedFileSize = decimalFormat(arguments.fileSize/1024) & " KB"
+			formattedFileSize = decimalFormat(arguments.fileSize / 1024) & " KB"
 		} else if( arguments.fileSize GTE 1048576 and arguments.fileSize LT 1073741824) {
-			formattedFileSize = decimalFormat(arguments.fileSize/1048576) & " MB"
+			formattedFileSize = decimalFormat(arguments.fileSize / 1048576) & " MB"
 		} else if( arguments.fileSize GTE 1073741824) {
-			formattedFileSize = decimalFormat(listing.size[x]/1073741824) & " GB"
+			formattedFileSize = decimalFormat(arguments.fileSize / 1073741824) & " GB"
 		}
 
 		return formattedFileSize;
